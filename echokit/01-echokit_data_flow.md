@@ -4,6 +4,41 @@
 
 ```mermaid
 flowchart TB
+    subgraph Device["ESP32-S3 Device"]
+        MIC[Microphone]
+        SPK[Speaker]
+        FW[Firmware<br/>Rust]
+    end
+    subgraph Server["EchoKit Server"]
+        WS[WebSocket Service<br/>ws.rs]
+        PROC[Audio Processing<br/>PCM ↔ WAV]
+    end
+    subgraph AI["AI Service Cluster"]
+        VAD_S[VAD Server<br/>Silero VAD]
+        ASR_S[ASR Server<br/>Whisper]
+        LLM_S[LLM Server<br/>OpenAI compatable/Gemini]
+        TTS_S[TTS Server<br/>GPT-SoVITS/ElevenLabs]
+    end
+    MIC -->|1. Audio Capture<br/>16kHz PCM| FW
+    FW -->|2. WebSocket Binary<br/>PCM Data| WS
+    WS -->|3a. HTTP POST<br/>WAV File| VAD_S
+    WS -->|3b. HTTP POST<br/>WAV File| ASR_S
+    VAD_S -->|4a. JSON Response<br/>Speech Segment Timestamps| WS
+    ASR_S -->|4b. JSON Response<br/>Recognized Text| WS
+    WS -->|5. HTTP POST<br/>JSON Message| LLM_S
+    LLM_S -->|6. JSON Response<br/>Reply Text| WS
+    WS -->|7. HTTP POST<br/>Text| TTS_S
+    TTS_S -->|8. WAV/PCM<br/>Audio Data| WS
+    WS -->|9. WebSocket Binary<br/>PCM Data| FW
+    FW -->|10. Audio Playback| SPK
+    style Device fill:#e1f5ff
+    style Server fill:#fff4e1
+    style AI fill:#f0e1ff
+```
+
+
+```mermaid
+flowchart TB
     subgraph Device["ESP32-S3 设备"]
         MIC[麦克风]
         SPK[扬声器]
